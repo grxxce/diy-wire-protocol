@@ -65,10 +65,9 @@ def setup(username):
     return response
 
 
-def delete_message():
-    # could be one message or multiple
-    print("to be implemented")
-    response = "DELETE_MESSAGE_SUCCESS§Message deleted"
+# def delete_message():
+#     # could be one message or multiple
+#     response = "DELETE_MESSAGE_SUCCESS§Message deleted"
 
 def delete_account(username):
     # remove from db & delete messages?

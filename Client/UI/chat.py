@@ -34,7 +34,43 @@ class ChatUI:
         self.update_search_results(
             [user for user in all_users if user != username]
         )
+
+        self.delete_message_callback = callbacks.get('delete_message')
         
+        # Create context menu
+        self.message_menu = tk.Menu(root, tearoff=0)
+        self.message_menu.add_command(label="Delete Message", command=self._delete_selected_message)
+        
+        # Bind right-click to messages in inbox
+        self.chat_display.bind("<Button-3>", self._show_message_menu)
+        self.chat_display.tag_bind("message", "<Button-3>", self._show_message_menu)
+        
+        # Track messages in chat display
+        self.displayed_messages = []
+    
+    def _show_message_menu(self, event):
+        """Show context menu for chat messages."""
+        try:
+            # Get clicked position
+            clicked_pos = self.chat_display.index(f"@{event.x},{event.y}")
+            
+            # Find which message was clicked
+            clicked_message = None
+            for msg in self.displayed_messages:
+                if (self.chat_display.compare(msg['start'], '<=', clicked_pos) and
+                    self.chat_display.compare(msg['end'], '>=', clicked_pos)):
+                    clicked_message = msg
+                    break
+            
+            if clicked_message:
+                # Store currently selected message
+                self.selected_message = clicked_message
+                # Show menu
+                self.message_menu.post(event.x_root, event.y_root)
+                
+        except Exception as e:
+            print(f"Error showing message menu: {e}")
+
     def create_widgets(self):
         # Main container with two columns
         self.main_frame = ttk.Frame(self.root, padding="10")
@@ -252,15 +288,43 @@ class ChatUI:
             
             # Clear input
             self.message_input.delete(0, tk.END)
-    def _format_sent_message(self, message, timestamp):
-        """Format and display a sent message"""
-        self.chat_display.insert(tk.END, f"{timestamp} You: ", 'sent')
-        self.chat_display.insert(tk.END, f"{message}\n", 'sent')
-
+    
     def _format_received_message(self, sender, message, timestamp):
-        """Format and display a received message"""
-        self.chat_display.insert(tk.END, f"{timestamp} {sender}: ", 'received')
-        self.chat_display.insert(tk.END, f"{message}\n", 'received')
+        """Format and insert received message with tags."""
+        start_pos = self.chat_display.index("end-1c")
+        
+        self.chat_display.insert(tk.END, f"{sender} ({timestamp}): ", "sender")
+        self.chat_display.insert(tk.END, f"{message}\n", "message")
+        
+        end_pos = self.chat_display.index("end-1c")
+        
+        # Store message data with its position
+        self.displayed_messages.append({
+            'start': start_pos,
+            'end': end_pos,
+            'sender': sender,
+            'message': message,
+            'timestamp': timestamp
+        })
+
+    def _format_sent_message(self, message, timestamp):
+        """Format and insert sent message with tags."""
+        start_pos = self.chat_display.index("end-1c")
+        
+        self.chat_display.insert(tk.END, f"You ({timestamp}): ", "sender")
+        self.chat_display.insert(tk.END, f"{message}\n", "message")
+        
+        end_pos = self.chat_display.index("end-1c")
+        
+        # Store message data with its position
+        self.displayed_messages.append({
+            'start': start_pos,
+            'end': end_pos,
+            'sender': self.username,
+            'message': message,
+            'timestamp': timestamp
+        })
+
 
     
     def _on_search_change(self, *args):
@@ -486,6 +550,37 @@ class ChatUI:
         except ValueError:
             messagebox.showerror("Error", "Invalid settings values")
     
+    def _delete_selected_message(self):
+        """Delete the selected message."""
+        if not hasattr(self, 'selected_message'):
+            return
+            
+        msg = self.selected_message
+        
+        # Confirm deletion
+        if messagebox.askyesno("Delete Message", 
+                             f"Delete this message from {msg['sender']}?"):
+            
+            # Call delete callback
+            if self.delete_message_callback:
+                delete_request = {
+                    'sender': msg['sender'],
+                    'message': msg['message'],
+                    'timestamp': msg['timestamp']
+                }
+                self.delete_message_callback(delete_request)
+            
+            # Remove from chat history
+            if self.selected_recipient in self.chat_histories:
+                self.chat_histories[self.selected_recipient] = [
+                    m for m in self.chat_histories[self.selected_recipient]
+                    if not (m['message'] == msg['message'] and 
+                           m['timestamp'] == msg['timestamp'])
+                ]
+            
+            # Refresh chat display
+            self.display_stored_messages()
+
     def _confirm_delete_account(self):
         """Show confirmation dialog before deleting account"""
         if messagebox.askyesno("Confirm Delete", 
