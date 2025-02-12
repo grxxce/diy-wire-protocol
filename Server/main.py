@@ -3,7 +3,7 @@ import socket
 import selectors
 import types
 from collections import defaultdict
-from service_actions import register, login, delete_account, delete_message, update_notification_limit, parse_request
+from service_actions import register, login, delete_account, update_notification_limit, parse_request
 from Model.ClientRequest import ClientRequest
 
 # todo: bot up with ipp address as command line argument 
@@ -224,9 +224,10 @@ def send_message(sender, recipient, message):
         return request2
 
 # MARK: Deletion
-def delete_message(message_uuid, sender, recipient):
+def delete_message(sender, message, timestamp):
+    print("delete_message", sender, message, timestamp)
     OP_CODE = "DELETE_MESSAGE"
-    request = ClientRequest.serialize(VERSION, OP_CODE, [message_uuid, sender, recipient])
+    request = ClientRequest.serialize(VERSION, OP_CODE, [timestamp, sender, message])
     
     if recipient in active_connections.keys():
         sent = active_connections[recipient].send(request.encode("utf-8"))

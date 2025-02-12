@@ -55,7 +55,8 @@ class Client:
             'send_message': self._handle_chat_message,
             'get_inbox': self._handle_get_inbox,
             'save_settings': self._handle_save_settings,
-            'delete_account': self._handle_delete_account
+            'delete_account': self._handle_delete_account,
+            'delete_message': self._handle_delete_message
         }
         
         self.current_username = username
@@ -75,6 +76,29 @@ class Client:
         chat_message = f"{version}§{len(chat_request)}§{chat_request}"
         print("chat_message", chat_message)
         self.send_request(chat_message)
+
+    def _handle_delete_message(self, message_data):
+        """Handle message deletion request."""
+        try:
+            delete_request = (
+                f"{version}§{10}$DELETE_MESSAGE§"
+                f"{message_data['sender']}§"
+                f"{message_data['message']}§"
+                f"{message_data['timestamp']}"
+            )
+            print(f"Sending delete request: {delete_request}")
+            self.send_request(delete_request)
+            
+        except Exception as e:
+            print(f"Error sending delete request: {e}")
+            messagebox.showerror("Error", "Failed to delete message")
+
+        op_code = "DELETE_MESSAGE"
+        if json:
+            delete_request = ServerRequest.serializeJSON(version, op_code, [message_uuid, sender, recipient])
+        else:
+            delete_request = ServerRequest.serialize(version, op_code, [message_uuid, sender, recipient])
+        self.send_request(delete_request)
 
     
     def _handle_get_inbox(self):
@@ -126,16 +150,6 @@ class Client:
         self.send_request(message)
         # Close the chat window and return to login
         # self.root.destroy()
-
-    def _handle_delete_message(self, message_uuid, sender, recipient):
-        """Handle the deletion of messages on both a sender & recipients' devices.
-           Send a message to the server asking to delete one or more messages from both clients."""
-        op_code = "DELETE_MESSAGE"
-        if json:
-            delete_request = ServerRequest.serializeJSON(version, op_code, [message_uuid, sender, recipient])
-        else:
-            delete_request = ServerRequest.serialize(version, op_code, [message_uuid, sender, recipient])
-        self.send_request(delete_request)
 
     def establishServerConnection(self):
         try: 
