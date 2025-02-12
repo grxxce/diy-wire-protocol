@@ -1,7 +1,3 @@
-# from uuid import uuid4
-# UUID is imported so that we can have universally unique identifiers for each message
-# UUID has a couple conventions, we've opted to use UUID4 as our version (todo: explain why!)
-
 # Messages will have the following structure, adhered to by the client & the server.
 # Depending on the use of JSON or the use of Strings!
 
@@ -19,32 +15,6 @@
 # Example:
 #   1§29§REGISTER§§{username}§{password}§{email}
 
-# REGISTER
-# ARGUMENTS:
-#       username
-#       password
-#       email
-
-# LOGIN
-# ARGUMENTS:
-#       username
-#       password
-
-# SEND
-# ARGUMENTS:
-#       uuid
-#       sender
-#       recipient
-#       message
-
-# DELETE_MESSAGE
-# ARGUMENTS:
-#       uuid
-
-# DELETE_ACCOUNT
-# ARGUMENTS:
-#       username
-
 import json
 
 class ClientRequest:
@@ -58,20 +28,20 @@ class ClientRequest:
 
     @staticmethod
     def serialize(version, op_code, arguments):
-        """TODO: add documentation"""
+        """Prepare our data to be transmitted over the wire through our 
+           custom wire protocol."""
         operation_specific = f"{op_code}"
         for arg in arguments:
             operation_specific += f"§{arg}"
         return f"{version}§{len(operation_specific)}§{operation_specific}∞"
 
-    # TODO: see if this works!
     @staticmethod
     def serializeJSON(version, op_code, arguments):
+        """Prepare our data to be transmitted over the wire utilizing JSON."""
         # Serialization function using JSON.
         operation_information = {
             "version": version,
             "opcode": op_code,
             "arguments": arguments
         }
-        # Return as JSON string?
         return json.dumps(operation_information)

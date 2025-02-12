@@ -1,4 +1,3 @@
-# from http.server import HTTPServer, BaseHTTPRequestHandler
 import sqlite3
 import hashlib
 from datetime import datetime
@@ -40,7 +39,6 @@ class AuthHandler:
                 )
                 conn.commit()
                 return True
-                # return "SUCCESS§Registration successful"
         except sqlite3.IntegrityError:
             return "ERROR§Username already exists"
         except Exception as e:

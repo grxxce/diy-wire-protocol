@@ -6,10 +6,6 @@ from collections import defaultdict
 from service_actions import register, login, delete_account, delete_message, update_notification_limit, parse_request
 from Model.ClientRequest import ClientRequest
 
-# todo: bot up with ipp address as command line argument 
-# todo: cooked can we use HTTO oor auth?
-
-
 """
 Welcome & Command-Line Arguments.
 We recommend using PORT = 5001 or 5002.
@@ -20,10 +16,6 @@ Proper usage to launch server:
 """
 if not len(sys.argv) == 4 and not len(sys.argv) == 3:
     sys.exit("Please follow the proper usage: python3 main.py PORT VERSION=1")
-# TODO: more easy checks??? brownie points???
-# elif not isinstance(sys.argv[2], int) or int(sys.argv[2]) < 0:
-#     sys.exit("The PORT entered must be a positive integer.") 
-
 
 # MARK: Configuration
 PORT = int(sys.argv[1])
@@ -32,12 +24,10 @@ if sys.argv[2]:
 else:
     VERSION = 1
 
-
 # MARK: Prepare sockets & selectors
 selector = selectors.DefaultSelector()
 hostname = socket.gethostname()
 HOST = socket.gethostbyname(hostname) 
-
 
 # MARK: Track necessary states
 active_connections = {}                 # Track currently connected clients
@@ -102,15 +92,6 @@ def service_connection(key, mask):
             
             selector.unregister(sock)
             sock.close()
-    # TODO: Can we delete this?
-    # if mask & selectors.EVENT_WRITE:
-    #     if data.outb:
-            # print("data", data.outb)
-            # return_data = "Service connection established."
-            # return_data = return_data.encode("utf-8")
-            # sent = sock.send(return_data)
-            # data.outb = data.outb[sent:]
-            # something = 0
 
 
 # MARK: Managing Client-Server Requests & Operations
@@ -185,34 +166,22 @@ def send_message(sender, recipient, message):
     print(f"Sending message from {sender} to {recipient}: {message}")
     # Case 1: Recipient is online.
     #       Then, send the message immediately.
-    # 
     # Case 2: The recipient is not online.
     #       Then, wait until they are back to check.
     OP_CODE = "NEW_MESSAGE"
     request = ClientRequest.serialize(VERSION, OP_CODE, [sender, recipient, message])
-    # message_request = f"NEW_MESSAGE§{sender}§{recipient}§{message}"
-    # request = f"{VERSION}§{len(message_request)}§{message_request}"
-    if recipient in active_connections.keys():
-        # They are online, so send the message
-        # message_request = f"NEW_MESSAGE§{sender}§{recipient}§{message}"
-        # request = f"{VERSION}§{len(message_request)}§{message_request}"
 
+    if recipient in active_connections.keys():
         # Okay, so we have now added data to the buffer of this particular socket of 
         # the person who is receiving the message, thus we must select their data buffer and
         # clear it!
-        # sent = active_connections[recipient].send(request.encode("utf-8"))
         sent = active_connections[recipient].send(request.encode("utf-8"))
         key = selector.get_key(active_connections[recipient])
         key.data.outb = key.data.outb[sent:]
         
         message_status = ClientRequest.serialize(VERSION, "RECEIVED_MESSAGE", [sender, message])
-        # message_status = f"RECEIVED_MESSAGE§{sender}§{message}"
-        # request2 = f"{VERSION}§{len(message_status)}§{message_status}"
-
-        # return request2
         return message_status
     else:
-        # not online!
         # Add to a list of pending messages, so that when the user 
         # comes back online that they will receive their messages.
         print("pending messages append: ", request)

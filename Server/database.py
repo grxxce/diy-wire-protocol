@@ -1,11 +1,9 @@
 import sqlite3
 
-
 class DatabaseManager:
     @staticmethod
     def get_contacts():
-        """Register a new user."""
-        print("IN GET CONTACTS")
+        """Obtain information about existing users to present to current users."""
         try:
             with sqlite3.connect('users.db') as conn:
                 cursor = conn.cursor()
@@ -14,17 +12,13 @@ class DatabaseManager:
                 usernames = []
                 for row in results:
                     usernames.append(row[0])
-                print("found these users:",usernames)
                 return usernames
-        # except sqlite3.IntegrityError:
-        #     return "ERROR§Username already exists"
         except Exception as e:
             print(f"ERROR§Fetching contacts failed: {str(e)}")
             return f"ERROR§Fetching contacts failed: {str(e)}"
 
-    # @staticmethod
     def get_limits(username):
-        print("IN GET CONTACTS")
+        """Recall the notification limits inputted by a user."""
         try:
             with sqlite3.connect('users.db') as conn:
                 cursor = conn.cursor()
@@ -35,8 +29,6 @@ class DatabaseManager:
                     usernames.append(row[0])
                 print(usernames)
                 return usernames
-        # except sqlite3.IntegrityError:
-        #     return "ERROR§Username already exists"
         except Exception as e:
             print(f"ERROR§Fetching contacts failed: {str(e)}")
             return f"ERROR§Fetching contacts failed: {str(e)}"
@@ -49,21 +41,13 @@ class DatabaseManager:
                 
                 # Start a transaction
                 cursor.execute('BEGIN TRANSACTION')
-                try:
-                    # todo: Delete user's messages (both sent and received)
-                    
+                try:                    
                     # Delete user from users table
                     cursor.execute('''
                         DELETE FROM users 
                         WHERE username = ?
                     ''', (username,))
-                    
-                    # Delete from any other related tables (e.g., settings, inbox)
-                    # cursor.execute('''
-                    #     DELETE FROM user_settings 
-                    #     WHERE username = ?
-                    # ''', (username,))
-                    
+
                     # Commit the transaction
                     conn.commit()
                     print(f"Successfully deleted account for user: {username}")

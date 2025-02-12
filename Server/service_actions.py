@@ -24,7 +24,6 @@ def parse_request(data):
 
 
 # Handle registration requests
-# NOT THE PROBLEM
 def register(username, password, email):
     # do things here
     AuthHandler.setup_database()
@@ -40,9 +39,7 @@ def register(username, password, email):
 
 
 # Handle login requests
-# NOT THE PROBLEM
 def login(username, password):
-    # do another thing
     try:
         if AuthHandler.authenticate_user(username=username, password=password) == True:
             # If we have a successful login, we should send over the necessary data to the user.
@@ -56,7 +53,7 @@ def login(username, password):
         print("login: failed to authenticate user")
 
 def setup(username):
-    # Get all possible contacts!! Send them to client when the client logs in
+    # Get all possible contacts! Send them to client when the client logs in.
     print("in setup")
     usernames = DatabaseManager.get_contacts()
     response = "USERS"
